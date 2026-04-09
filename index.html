@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zeerostock — Surplus Inventory Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0e11;
+    --surface:   #16181d;
+    --border:    #2a2d35;
+    --accent:    #e8ff47;
+    --accent2:   #ff6b35;
+    --text:      #eef0f4;
+    --muted:     #676b78;
+    --tag-bg:    #1e2028;
+    --row-hover: #1c1f27;
+    --radius:    10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    padding: 36px 48px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 120% at 10% 50%, rgba(232,255,71,.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .logo-mark {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 24px; height: 24px; }
+  .logo-text h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+  .logo-text p  { font-size: .78rem; color: var(--muted); margin-top: 2px; font-weight: 400; }
+  .header-badge {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    color: var(--accent);
+    background: rgba(232,255,71,.08);
+    border: 1px solid rgba(232,255,71,.2);
+    padding: 4px 12px;
+    border-radius: 999px;
+    letter-spacing: .05em;
+  }
+
+
+  main { max-width: 1140px; margin: 0 auto; padding: 40px 48px 80px; }
+
+  .search-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 36px;
+  }
+  .panel-label {
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+  @media (max-width: 760px) {
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+    .btn-search   { grid-column: 1/-1; }
+    main          { padding: 28px 20px 60px; }
+    header        { padding: 24px 20px 20px; }
+  }
+
+  .field label {
+    display: block;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: .88rem;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+    appearance: none;
+  }
+  .field input:focus,
+  .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,255,71,.12);
+  }
+  .field input::placeholder { color: var(--muted); }
+  .field select option { background: #1e2028; }
+
+  .price-row { display: flex; gap: 8px; align-items: center; }
+  .price-row span { color: var(--muted); font-size: .8rem; flex-shrink: 0; }
+
+  .btn-search {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent);
+    color: #0d0e11;
+    border: none;
+    border-radius: var(--radius);
+    padding: 11px 24px;
+    font-family: 'Syne', sans-serif;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .12s, opacity .12s;
+    white-space: nowrap;
+    height: 42px;
+  }
+  .btn-search:hover  { opacity: .88; transform: translateY(-1px); }
+  .btn-search:active { transform: translateY(0); }
+
+  .btn-clear {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: var(--radius); padding: 10px 16px;
+    font-family: 'Syne', sans-serif; font-size: .82rem; cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-clear:hover { border-color: var(--muted); color: var(--text); }
+
+  .error-banner {
+    background: rgba(255,107,53,.1);
+    border: 1px solid rgba(255,107,53,.3);
+    color: #ff8c5a;
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: .82rem;
+    margin-top: 14px;
+    display: none;
+  }
+
+  .results-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .results-count {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .results-count span {
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: .9rem;
+    letter-spacing: 0;
+  }
+  .divider { flex: 1; height: 1px; background: var(--border); }
+
+  .table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface); }
+  thead th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody td {
+    padding: 14px 18px;
+    font-size: .88rem;
+    vertical-align: middle;
+  }
+  .td-id {
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+    color: var(--muted);
+  }
+  .td-name { font-weight: 600; }
+  .td-cat {
+    display: inline-block;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+  .td-qty {
+    font-family: 'DM Mono', monospace;
+    font-size: .82rem;
+    color: var(--text);
+  }
+  .td-price {
+    font-family: 'DM Mono', monospace;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 72px 32px;
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .empty-icon { font-size: 2.6rem; margin-bottom: 16px; opacity: .5; }
+  .empty-state h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+  .empty-state p  { color: var(--muted); font-size: .82rem; }
+
+
+  .skeleton-row td { padding: 16px 18px; }
+  .skel {
+    height: 14px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--border) 25%, #2f3240 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  .fade-up { animation: fadeUp .25s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#0d0e11" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  </div>
+  <div class="logo-text">
+    <h1>Zeerostock</h1>
+    <p>Surplus inventory marketplace</p>
+  </div>
+  <div class="header-badge">BUYER PORTAL</div>
+</header>
+
+<main>
+  <div class="search-panel">
+    <div class="panel-label">Search Inventory</div>
+    <div class="filters-grid">
+      <div class="field">
+        <label>Product name</label>
+        <input id="q" type="text" placeholder="e.g. Copper Wire, Steel Bolt…" />
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="category">
+          <option value="">All categories</option>
+          <option>Electrical</option>
+          <option>Fasteners</option>
+          <option>Industrial</option>
+          <option>Metal</option>
+          <option>Plastic</option>
+          <option>Plumbing</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Price range (₹)</label>
+        <div class="price-row">
+          <input id="minPrice" type="number" placeholder="Min" min="0" />
+          <span>—</span>
+          <input id="maxPrice" type="number" placeholder="Max" min="0" />
+        </div>
+      </div>
+      <div class="field" style="display:flex;gap:8px;align-items:flex-end;">
+        <button class="btn-clear" id="clearBtn" onclick="clearFilters()">Clear</button>
+      </div>
+      <button class="btn-search" onclick="doSearch()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </button>
+    </div>
+    <div class="error-banner" id="errorBanner"></div>
+  </div>
+
+  <div class="results-header" id="resultsHeader" style="display:none">
+    <div class="results-count">Results: <span id="countLabel">0</span></div>
+    <div class="divider"></div>
+  </div>
+
+  <div class="table-wrap" id="tableWrap" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name</th>
+          <th>Category</th>
+          <th>Qty Available</th>
+          <th>Unit Price</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📦</div>
+    <h3>No results found</h3>
+    <p>Try adjusting your search terms or removing some filters.</p>
+  </div>
+</main>
+
+<script>
+
+const INVENTORY = [
+  { id:1,  name:"Industrial HDPE Pipes",       category:"Plumbing",   price:450,   quantity:200  },
+  { id:2,  name:"Copper Wire Coil 2.5mm",       category:"Electrical", price:1200,  quantity:80   },
+  { id:3,  name:"Stainless Steel Bolts M10",    category:"Fasteners",  price:18,    quantity:5000 },
+  { id:4,  name:"LED Panel Light 40W",          category:"Electrical", price:650,   quantity:150  },
+  { id:5,  name:"PVC Conduit 25mm",             category:"Plumbing",   price:95,    quantity:400  },
+  { id:6,  name:"Hydraulic Hose Assembly",      category:"Industrial", price:3200,  quantity:30   },
+  { id:7,  name:"Aluminum Angle Bar 40x40",     category:"Metal",      price:280,   quantity:300  },
+  { id:8,  name:"Polycarbonate Sheet 6mm",      category:"Plastic",    price:1850,  quantity:60   },
+  { id:9,  name:"Hex Nuts M8 Galvanised",       category:"Fasteners",  price:5,     quantity:10000},
+  { id:10, name:"Copper Elbow 15mm",            category:"Plumbing",   price:42,    quantity:600  },
+  { id:11, name:"Three Phase Motor 2.2kW",      category:"Electrical", price:12500, quantity:12   },
+  { id:12, name:"Steel I-Beam 150x75",          category:"Metal",      price:4800,  quantity:25   },
+  { id:13, name:"PTFE Sealing Tape",            category:"Industrial", price:28,    quantity:2000 },
+  { id:14, name:"PP Compression Fitting",       category:"Plumbing",   price:75,    quantity:350  },
+  { id:15, name:"Cable Tray 100mm Galv",        category:"Electrical", price:520,   quantity:90   },
+];
+
+const fmt = (n) => "₹" + n.toLocaleString("en-IN");
+
+function search(q, category, minPrice, maxPrice) {
+  let results = INVENTORY;
+  if (q && q.trim()) {
+    const t = q.trim().toLowerCase();
+    results = results.filter(i => i.name.toLowerCase().includes(t));
+  }
+  if (category) {
+    results = results.filter(i => i.category.toLowerCase() === category.toLowerCase());
+  }
+  if (minPrice !== null && !isNaN(minPrice)) results = results.filter(i => i.price >= minPrice);
+  if (maxPrice !== null && !isNaN(maxPrice)) results = results.filter(i => i.price <= maxPrice);
+  return results;
+}
+
+function showError(msg) {
+  const b = document.getElementById("errorBanner");
+  b.textContent = msg;
+  b.style.display = "block";
+}
+function hideError() {
+  document.getElementById("errorBanner").style.display = "none";
+}
+
+function showSkeleton() {
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = Array(5).fill(0).map(() => `
+    <tr class="skeleton-row">
+      <td><div class="skel" style="width:28px"></div></td>
+      <td><div class="skel" style="width:180px"></div></td>
+      <td><div class="skel" style="width:80px"></div></td>
+      <td><div class="skel" style="width:60px"></div></td>
+      <td><div class="skel" style="width:70px"></div></td>
+    </tr>`).join("");
+  document.getElementById("tableWrap").style.display = "block";
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("resultsHeader").style.display = "flex";
+  document.getElementById("countLabel").textContent = "…";
+}
+
+function renderResults(results) {
+  const tbody = document.getElementById("tableBody");
+  document.getElementById("countLabel").textContent = results.length;
+  document.getElementById("resultsHeader").style.display = "flex";
+
+  if (results.length === 0) {
+    document.getElementById("tableWrap").style.display = "none";
+    document.getElementById("emptyState").style.display = "flex";
+    return;
+  }
+
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("tableWrap").style.display = "block";
+
+  tbody.innerHTML = results.map((item, idx) => `
+    <tr class="fade-up" style="animation-delay:${idx * 30}ms">
+      <td class="td-id">${String(item.id).padStart(3,"0")}</td>
+      <td class="td-name">${item.name}</td>
+      <td><span class="td-cat">${item.category}</span></td>
+      <td class="td-qty">${item.quantity.toLocaleString("en-IN")}</td>
+      <td class="td-price">${fmt(item.price)}</td>
+    </tr>`).join("");
+}
+
+function doSearch() {
+  hideError();
+  const q        = document.getElementById("q").value;
+  const category = document.getElementById("category").value;
+  const minRaw   = document.getElementById("minPrice").value;
+  const maxRaw   = document.getElementById("maxPrice").value;
+
+  const min = minRaw === "" ? null : parseFloat(minRaw);
+  const max = maxRaw === "" ? null : parseFloat(maxRaw);
+
+  if (minRaw !== "" && isNaN(min)) { showError("Min price must be a valid number."); return; }
+  if (maxRaw !== "" && isNaN(max)) { showError("Max price must be a valid number."); return; }
+  if (min !== null && max !== null && min > max) {
+    showError("Min price cannot be greater than max price."); return;
+  }
+
+  showSkeleton();
+
+  setTimeout(() => {
+    const results = search(q, category, min, max);
+    renderResults(results);
+  }, 320);
+}
+
+function clearFilters() {
+  ["q","minPrice","maxPrice"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("category").value = "";
+  hideError();
+  document.getElementById("tableWrap").style.display = "none";
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("resultsHeader").style.display = "none";
+}
+
+
+document.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+
+
+window.addEventListener("load", () => doSearch());
+</script>
+</body>
+</html>
