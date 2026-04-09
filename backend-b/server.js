@@ -13,6 +13,8 @@ app.use(async (req, res, next) => {
   catch (err) { res.status(500).json({ error: "Database initialisation failed." }); }
 });
 
+app.get("/healthz", (req, res) => res.json({ status: "ok" }));
+
 
 app.post("/supplier", (req, res) => {
   const { name, city } = req.body;
@@ -90,7 +92,17 @@ app.get("/suppliers", (req, res) => {
 });
 
 if (require.main === module) {
-  getDb().then(() => app.listen(PORT, () => console.log(`Assignment B server running on http://localhost:${PORT}`)));
+  const { seed } = require("./seed");
+  seed()
+    .then(() => {
+      app.listen(PORT, () =>
+        console.log(`Assignment B server running on http://localhost:${PORT}`)
+      );
+    })
+    .catch((err) => {
+      console.error("Startup seed failed:", err);
+      process.exit(1);
+    });
 }
 
 module.exports = app;
