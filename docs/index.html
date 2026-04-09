@@ -30,7 +30,7 @@
     overflow-x: hidden;
   }
 
-  /* ── HEADER ── */
+  
   header {
     padding: 36px 48px 28px;
     border-bottom: 1px solid var(--border);
@@ -69,10 +69,10 @@
     letter-spacing: .05em;
   }
 
-  /* ── LAYOUT ── */
+
   main { max-width: 1140px; margin: 0 auto; padding: 40px 48px 80px; }
 
-  /* ── SEARCH PANEL ── */
+
   .search-panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -172,7 +172,6 @@
     display: none;
   }
 
-  /* ── RESULTS HEADER ── */
   .results-header {
     display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
   }
@@ -191,7 +190,6 @@
   }
   .divider { flex: 1; height: 1px; background: var(--border); }
 
-  /* ── TABLE ── */
   .table-wrap {
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -249,7 +247,6 @@
     color: var(--accent);
   }
 
-  /* ── EMPTY STATE ── */
   .empty-state {
     display: none;
     flex-direction: column;
@@ -264,7 +261,6 @@
   .empty-state h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
   .empty-state p  { color: var(--muted); font-size: .82rem; }
 
-  /* ── SKELETON ── */
   .skeleton-row td { padding: 16px 18px; }
   .skel {
     height: 14px; border-radius: 4px;
@@ -274,7 +270,7 @@
   }
   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-  /* ── FADE-IN ── */
+ 
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
   .fade-up { animation: fadeUp .25s ease both; }
 </style>
@@ -362,7 +358,7 @@
 </main>
 
 <script>
-// ── In-memory inventory (mirrors backend-a/data.js) ──────────────────────
+
 const INVENTORY = [
   { id:1,  name:"Industrial HDPE Pipes",       category:"Plumbing",   price:450,   quantity:200  },
   { id:2,  name:"Copper Wire Coil 2.5mm",       category:"Electrical", price:1200,  quantity:80   },
@@ -463,7 +459,7 @@ function doSearch() {
   }
 
   showSkeleton();
-  // Simulate async API call with slight delay
+ 
   setTimeout(() => {
     const results = search(q, category, min, max);
     renderResults(results);
@@ -479,10 +475,10 @@ function clearFilters() {
   document.getElementById("resultsHeader").style.display = "none";
 }
 
-// Enter key triggers search
+
 document.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
 
-// Load all on start
+
 window.addEventListener("load", () => doSearch());
 </script>
 </body>

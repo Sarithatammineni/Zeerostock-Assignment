@@ -1,11 +1,3 @@
-/**
- * db.js – SQLite via sql.js (pure JavaScript, no native bindings required).
- *
- * sql.js keeps the database entirely in-memory (or can be persisted as a
- * Uint8Array buffer). For a production deployment you would swap this for
- * better-sqlite3 (synchronous, file-based) or a managed SQL service such as
- * PostgreSQL via the `pg` driver.
- */
 const initSqlJs = require("sql.js");
 
 let db = null;
@@ -46,7 +38,6 @@ function initSchema() {
   `);
 }
 
-/** Execute a SELECT and return rows as plain objects. */
 function query(sql, params = []) {
   const stmt = db.prepare(sql);
   stmt.bind(params);
@@ -58,10 +49,8 @@ function query(sql, params = []) {
   return rows;
 }
 
-/** Execute an INSERT/UPDATE/DELETE. Returns lastInsertRowid. */
 function run(sql, params = []) {
   db.run(sql, params);
-  // sql.js doesn't expose lastInsertRowid directly; query it
   const [{ id }] = query("SELECT last_insert_rowid() AS id");
   return { lastInsertRowid: id };
 }
